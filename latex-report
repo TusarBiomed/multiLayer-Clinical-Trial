@@ -1,0 +1,1898 @@
+\documentclass[12pt]{article}
+\usepackage[letterpaper, margin = 1in]{geometry}
+\usepackage{graphicx}
+\graphicspath{ {images/} }
+\usepackage{mathtools}
+\usepackage{amssymb}
+\usepackage{courier}
+\usepackage{Sweavel}
+\usepackage{subcaption}
+\usepackage{enumitem}
+\usepackage[utf8]{inputenc}
+\usepackage[english]{babel}
+\usepackage[nottoc]{tocbibind}
+\usepackage{placeins}
+\usepackage{fancyhdr}
+\numberwithin{equation}{section}
+\pagestyle{fancy}
+\fancyhead{}
+\fancyhead[L]{Multiple testing procedures for Clinical Trials with ordered objectives.}
+\fancyfoot{}
+\fancyfoot[L]{Md Rezaul Karim Tusar}
+\fancyfoot[R]{\thepage}
+\renewcommand{\baselinestretch}{1.5}
+\usepackage{hyperref}
+\hypersetup{
+    colorlinks=true,
+    linkcolor=blue,
+    filecolor=green,      
+    urlcolor=violet,
+}
+ 
+\urlstyle{same}
+\usepackage{listings}
+\lstset{
+    language=R,
+    basicstyle=\ttfamily
+}
+\usepackage[toc,page]{appendix}
+
+\begin{document}
+\begin{titlepage}
+\begin{center}
+\huge{\bfseries Multiple testing procedures for Clinical Trials with ordered objectives}\\
+[0.3in]
+\textsc{\LARGE Master thesis}\\
+[0.6in]
+\textsc{\LARGE Hochschule Furtwangen University}\\
+\textsc{\Large 2015-2017}\\
+[0.8in]
+\begin{figure}
+\includegraphics[scale=.1]{logoHFU}
+\end{figure}
+
+
+\end{center}
+
+
+\begin{flushright}
+\textsc{\Large Student: Md Rezaul Karim Tusar}
+\end{flushright}
+\begin{flushleft}
+\textsc{\Large  Director : prof. Dr. Matthias Kohl\\ CO-director : Sowmya Srinivasan Perumbakkam}
+\end{flushleft}
+
+\end{titlepage}
+
+
+\thispagestyle{plain}
+\pagenumbering{roman}
+\section*{Abstract} \addcontentsline{toc}{section}{Abstract}
+There are several procedures available to calculate power among the primary endpoints in clinical trial
+with ordered objectives. Number of these objective depends on circumstances like; how many steps are required to reach the final goal(recover from disease)? how many patient subgroups are needed to justify the result? and measurement of Family Wise Error Rate(FWER) to control type $I$ error rate. Based on objectives researchers select an appropriate Multiple Testing Procedure(MTP) to analyze clinical trial. Recently many multiple testing procedures have been developed for example Bonferroni, Holm, Hommel and Hochberg procedures along with some other methods that allow the researchers to arrange different objectives e.g. the fixed-sequence, the stepwise multiple testing, the fallback, the chain and the gatekeeping procedures.\cite{ac} The important aspects of designing clinical trial is determination of the sample size and calculation of the power and in case of complex structured clinical trials it is not possible to calculate these directly and most often done by simulation based methods. At present drug development costs are boosting rapidly. Therefore, selecting a more sophisticated procedure in a drug development program is a crucial task. \cite{ac,ad} In my thesis I will elaborate and compare two common simple non-parametric MTPs(the fixed sequence and the fallback) and try to find out the relation between power, sample size, correlation and standardized effect size. \\    
+
+
+
+\newpage
+
+\thispagestyle{plain}
+
+\section*{Acknowledgements}
+\addcontentsline{toc}{section}{Acknowledgement}
+First of all I would like to express my sincere gratitude to my supervisor Professor Dr. Matthias Kohl.
+Although, I am a student from Life Science background but, with his proper guidance and dedicated teaching not only helps me to accomplished my thesis but also inspired me to do more research on medical Data science. During my thesis work he trained me on crucial facts of this discipline like critical thinking, motivation, patience and work on pressure.\\
+
+Besides my supervisor, my thanks goes to second supervisor, all professors and staffs of HFU for their immense behavior, enthusiastic lecture and motivation through out my Master degree.\\
+
+Last but not least, I also want to reveal my heartiest grateful to my parents, younger brother, friends and well wishers whom encourage me to do my best.\\
+
+
+
+\newpage 
+
+\thispagestyle{plain}
+
+\tableofcontents
+\thispagestyle{plain}
+\cleardoublepage
+
+
+\newpage
+\pagenumbering{arabic}
+\setcounter{page}{1}
+\section{Introduction} 
+
+Most human diseases are unique by their characteristics e.g. signs and symptoms, level of severity, patient reported outcomes and steps of remedies. For an example Alzheimer's disease has two categorical stages. First one is poor cognition and second more severe is disorderly behavior on daily living. Migraine can be classified by moderate-to-severe headache along with successively nausea, photo-phobia and phono-phobia. Widely known Hepatitis diseases have three stage A, B and C(liver cirrhosis). Other diseases where multiple measures present are Depression, Arthritis, Multiple Sclerosis, Lupus erythrematosus, Psoriasis and so on. Vaccines appeared an uncommon case where more than ten co-primary immunogenicity endpoints required to demonstrate the success of interventions. To justify a clinically significant improvement in all of these diseases it is necessary to show meaningful improvement in all or partially some co-primary endpoints. Therefore, regulatory agencies have to designed the clinical trial on several endpoints instead of one depends on the multiple measures of the disease. These all co-primary endpoints later classify into primary and secondary based on the treatment efficacy. Here, primary endpoints reflect how much the treatment affects on disease progression while secondary endpoints suggest recovery process. \cite{ac,ad} \\
+Emerged on disease process and pathology primary endpoints are further divide into two types. Those are-\\      
+\begin{itemize}
+    \item{Alternative primary endpoints: As their name, the endpoints are alternative to each other. That means, the trial is successful if it proves clinically significant result only one among all endpoints.} 
+    \item{Multiple co-primary endpoints: Here continuative improvement in all endpoints are required to prove that, the trial is successful. \cite{ad,ae}} 
+\end{itemize}
+\newpage
+Although in-practice the situation varies and rarely accompanied with above theories. We want to elucidate some examples which actually the regulatory agencies are doing in daily basis.
+\begin{itemize}[noitemsep]
+\item{Only one primary endpoint needs to be statistically significant among all.} 
+\item{One specific primary endpoint needs to be statistically significant.} 
+\item{Assume that, there are three primary endpoints A, B and C. Here, either A needs to be statistically significant or both B and C need to be statistically significant. or, Either A and B or B and C or C and A need to be statistically significant.}
+\item{Among all endpoints one or more than one specified endpoints need to be statistically significant and others are need to be least marginally significant.}
+\item{All endpoints are in a hierarchical way which describes how will be the clinical trials conduct. The endpoints within a family have a complex logical relations with each other. Let assume a simple clinical trial with four endpoints A, B, C and D. If A is statistically significant there are no needs to test B and we can directly go to test C and D. Other-hand if A is not statistically significant we have to test B. If B is statistically significant we no need to test C and can directly go to test D. That means test B is complementary of test A and C. If A and B both are not statistically significant we consider null-hypotheses are true and clinical trial is over.}
+\item{All primary endpoints need to be statistically significant.}
+\item{There are complex logical relations among all primary and secondary families(A family is a set of hypothesis). One or more primary families results required to determine how will be the secondary families test going on.\cite{ae} Let assume a clinical trial with two primary($F_1$ and $F_2$) and two secondary($F_3$ and $F_4$) families. Each family has a certain number of endpoints. If primary family $F_1$ is statistically successful we can go directly to secondary family $F_4$ and if $F_1$ is not statistically successful we have to test primary family $F_2$. When $F_2$ is statistically successful afterwards, we have to test both secondary families $F_3$ and $F_4$.} \cite{ae}
+\end{itemize}
+\newpage
+In clinical trials statisticians have to ensure that, the statistical test has sufficient power to prove the clinically significant effect of a particular disease. At this consequence clinical trials with more than one clinical objective, the power calculation should be done in multiple directions. This calculation should be based on the number of clinical objectives, Multiple Testing Procedures(MTPs) and done in a multivariate manner. Because of, a clinical trial with multiplicity issues when performing multiple tests in an uni-variate manner along with unadjusted p-values increases the overall probability of an incorrect decision as well as enhance the type I error rate. To avoid this problem researchers are introduce a set or family of hypothesis including the adjusted p-value instead of considering individual tests. \cite{ac} The hypotheses are counting from 1 to m and can be shown as\\
+\begin{quote}  
+	$H_{1}, \ldots, H_{m}$ \cite{ac}.  
+\end{quote}	
+
+The above one is a single set of null hypotheses which can be presented as a single source of multiplicity or one-dimensional multiplicity problem. It also possible to convert this setting into a more advanced setting which includes multiple families of null hypotheses associated with several sources of multiplicity into a multidimensional setting. This advanced setting is highly recommended in clinical trials with complex hierarchically ordered endpoints. Consider a set of m null hypotheses categorized into k ordered families where each family has a certain number of hypothesis. \cite{aa,ab,ac,af} It can be present as following-\\
+
+\begin{quote}
+     Family $F_{1}: H_{1}, \ldots, H_{M_{1}}$,\\
+		 Family $F_{2}: H_{M_{1} + 1}, \ldots, H_{M_{2}}$,\\
+		 ...\\
+		 Family $F_{k}: H_{M_{k-1}+1}, \ldots, H_{M_{k}}$.\\
+\end{quote}				
+
+Here, $F_{i}$ presents the number of family,\\
+      $m_{i}$ presents the number of null hypotheses in family $F_{i}$ along with $M_{i} = m_{1} + \ldots + m_{i},$\\
+			$i = 1, \ldots, k$ and $m = m_{1} + \ldots + m_{k}$ \cite{ac}.\\
+		
+	
+Starting from family F1 the ordered families are examined in a sequential manner and Family $F_{i}$ serves as a gatekeeper for family $F_{i+1}$ where $i = 1, \ldots, k-1$. \cite{aa,ab,ac} It means that, in case of  gate-keeping procedure we are allow to test a family of hypotheses if only we get successful result in previous one. \\
+
+In gate-keeping procedure endpoints of primary family($F_{1}$), reflects the overall trial outcome and the basis of regulatory claim to prove that, the trial is successful. On the other-hand, endpoints of secondary families provide additional information of treatment efficacy and are grouped from $F_{2}$ through $F_{k}$. In-general most of the time the adjusted p-value is considered as $\alpha = 0.025$ regardless how many hypotheses are considered in each family. \cite{aa,ac,ai} There are several methods available for conducting gate-keeping clinical trials. Those are- 
+
+\begin{itemize}[noitemsep]
+\item{Serial gatekeeper: In case of serial gatekeeper one must need to reject all hypotheses in a family to test consequent families. The serial gatekeeping procedure is similar to intersection union testing approach; where the union of several testing hypotheses will be rejected if only all of them are rejected. Let consider a certain family($F_i$) hypotheses are $H_{M_{i-1} + 1}, \ldots, H_M_i$ and their multiplicity adjusted p-values are $P_i1, \ldots, P_in_i$, then the hypotheses in $F_{i+1}$ will be tested if only
+\begin{quote}  
+	max$(P_i1,\ldots, P_in_i) \leq \alpha$. \cite{ab}
+\end{quote}	
+A clinical trial with patients of Alzheimer's disease to justify an experimental drug compared to placebo shall be a perfect example of serial gatekeeper. Alzheimer's disease treatment trial has two primary and two secondary endpoints. The primary endpoints are P1: Alzheimer's Disease Assessment Scale- Cognitive Subscale(ADAS- Cog) and P2: Clinical Global Impression of Change(CGIC). The secondary endpoints are S1: a biochemical endpoint and S2: an imaging endpoint. The researcher will be allow to test S1 and S2 if only they get clinically significant result in both P1 and P2. The primary endpoints(P1 and P2) do not require an adjusted p-value for multiplicity issues and tested by using an intersection-union test where the FWER should be set at $\alpha = 0.05$. \cite{aa,ab} }
+\newpage
+\item{Parallel gatekeeper: A family is termed as Parallel gatekeeper, when one needs to reject at least one hypothesis in a family to pass that specific family. This procedure is resemble as union-intersection testing procedure. Let assume a family $F_i$ has hypotheses $H_{M_{i-1} + 1}, \ldots, H_M_i$, and their multiplicity adjusted p-values are $P_i1, \ldots, P_in_i$. Then the hypotheses in $F_{i+1}$ will be tested if 
+\begin{quote}  
+	min$(P_i1, \ldots, P_in_i) \leq \alpha$. \cite{ab}
+\end{quote}
+A clinical trial for treatment of Acute Respiratory Distress Syndrome(ARDS) where an experimental drug is compared with placebo can be present as an example of parallel gatekeeper. The trial has two families of hypotheses. The primary family hypotheses are P1: Lung function and P2: Mortality. Likewise the secondary family also considered two hypotheses, those are S1: ICU-free days and S2: Quality life. S1 and S2 will be tested if one of P1 or P2 has significant result. \cite{aa,ab} }
+
+\item{Tree structured gatekeeper: The tree gatekeeping procedure exhibits a more complex 'multi-dimensional' structure rather than simple 'one-dimensional' like serial or parallel gatekeeper. The multi-dimension corresponds to multiple doses, multiple outcome variables, multiple analysis of objectives and multiple sample sizes. As an explanation, lets consider k families of hypotheses $F_1, \ldots, F_k$. The algorithm starts from the hypotheses in $F_1$ with local $\alpha$ level with using an appropriate test. In case of families after $F_1$, one first have to determine whether each hypothesis is testable or not. Assume a family $F_i$ has a certain hypothesis $H_{ij}$, where $j = 1, \ldots, n_i$. The hypothesis $H_{ij}$ will be tested by the tree gatekeeping procedure if it can fulfill one of the following two conditions. \cite{aa,ab} \\
+1. A pre-specified subset of hypotheses($R_{ij}^s$) are produced from previous all hypotheses. The hypothesis $H_{ij}$ will be tested with that subset as the serial rejection set. \cite{ab} \\
+2. One or more than one hypotheses are from a pre-specified subset($R_{ij}^p$) of hypotheses where previous families are $F_1, \ldots, F{i-1}$. The hypothesis $H_{ij}$ will be tested with the subset as the parallel rejection set. \cite{ab} \\ If no any condition is satisfied, $H_{ij}$ will be automatically accepted or tested by other procedure. Each hypothesis is tested by same approach.}
+
+\end{itemize}
+
+Each gate-keeping method has a broad characteristics to operating clinical trials. In-depth description of gate-keeping procedure is beyond my thesis that's why I sincerely skip this point. In rest of my thesis work I will focus on different non-parametric MTPs and how they functioned on calculating power. \\
+
+
+
+\newpage
+
+\section{Methods} 
+In this section we want to introduce some non-parametric multiple testing procedures. Based on available clinical and statistical information the most appropriate MTPs are select for clinical trial.   
+
+\subsection{Simple procedures with a pre-specified hypotheses ordering}
+
+This is the section which forms the core part of my thesis. 
+
+
+\subsubsection{Fixed-sequence procedure} 
+Relevant clinical information are used to order the testing hypotheses. These information are collected from the earlier drug development programs and on the basis of the trial objectives. Several methods are already developed by researchers to lead clinical trials where these information can be incorporated. Among of these most intuitive and simple MTP with pre-specified order is the fixed sequence procedure where hypotheses are ordered from $H_1$ to $H_m$ and the trial is conducted in a straightforward manner. The principle of testing algorithm is a consecutive rejecting approach and starts from $H_1$ with full $\alpha$ level and stops when a hypothesis can not be rejected at the same full $\alpha$ level and considered remaining null hypotheses are true. Although this approach is too rigid to gain sufficient power after the first endpoint but it has found some noticeable applications in confirmatory clinical trials. \cite{ac,af} \\ 
+\begin{figure*}[ht]\centering      
+\includegraphics[scale=.5]{fixse}
+\caption{Fixed-sequence procedure}
+\label{fig:view}
+\end{figure*}
+
+\begin{itemize}[noitemsep]
+\item Single strike rule acceptable;
+\item Step 1: If $p_1 \leq \alpha$, reject $H_1$ and go next step, else accept all hypotheses and stop.
+\item Step i: $(i = 2,\ldots, m-1)$. If $p_i \leq \alpha$, reject $H_i$ and go to step $i + 1$, else accept $H_i,\ldots, H_m$ and stop.
+\item Step m: If $p_m \leq \alpha$, reject $H_m$, else accept $H_m$ \cite{ai}.
+\end{itemize}
+
+
+\subsubsection{Fallback procedure} 
+Fallback is the improved version of the fixed-sequence procedure. The testing algorithm is allowed to test remaining hypotheses if also a test is not significant in the early of the sequence. Thereby in-case of alternative primary endpoints where it is not necessary to get successful result in all endpoints, has a potential chance to apply the fallback procedure. Based on clinical importance weights are distributed among all endpoints and their summation is $1$.\cite{af,ai} Lets consider a set of endpoints are weighted as $w_1, \ldots, w_m$ and can be present as-\\
+\begin{quote}
+$\sum\limits_{i=1}^m w_i = 1$. 
+\end{quote}
+Here the power is not decreasing sequentially like as the fixed-sequence procedure and there is enough chances to get sufficient power in all endpoints regardless of their place in a family. The fallback procedure is used frequently in Phase II clinical trials. \\ 
+
+ 
+\begin{figure*}[ht]\centering 
+\includegraphics[scale=.5]{fallback}
+\caption{Fallback procedure}
+\label{fig:view}
+\end{figure*}
+
+\begin{itemize}[noitemsep]
+\item Single strike rule not applicable.
+\item Step 1: If $p_1 \leq \alpha_1$, where $\alpha_1 = \alpha\omega_1$, reject $H_1$, otherwise accept $H_1$. Go to next step.
+\item Step i: $(i = 2,\ldots,m-1)$. If $H_{i-1}$ was rejected $\alpha_i$ will be $\alpha_i = \alpha_{i-1} + \alpha\omega_i$ and in case of $H_{i-1}$ accepted $\alpha_i = \alpha\omega_i$. If $p_i \leq \alpha_i$, reject $H_i$, Otherwise accept $H_i$. Go to step $i + 1$.
+\item Step m: If $H_{m - 1}$ is rejected $\alpha_m = \alpha_{m - 1} + \alpha\omega_m$ and if $H_{m - 1}$ is accepted $\alpha_m = \alpha\omega_m$. If $p_m \leq \alpha_m$, reject $H_m$, otherwise accept $H_m$.
+\item Domino effect has no influence on Fallback procedure \cite{af,ai}.
+\end{itemize}
+
+\subsection{Advanced procedure with a pre-specified hypotheses ordering}
+
+\subsubsection{Chain procedure} 
+Chain procedure is more flexible advanced nonparametric approach which enables complex decision trees. This method is build on two sets of procedure parameters \cite{ai}. Those are-\\
+1. Initial hypotheses weights: $w_1, \ldots, w_m$.\\
+Here, $w_i \geq 0; i = 1, \ldots, m$; and $\sum\limits_{i=1}^m w_i = 1$.\\
+			 		
+2. Initial transition matrix:
+$$\left[\begin{array}
+{ccc}
+g_{11} & ... & g_{1m}\\
+\vdots & \vdots & \vdots \\
+g_{m1}	& ... & g_{mm}			
+\end{array}\right]$$
+With, $g_{ij} \geq 0; i = 1, \ldots, m-1;$ and $j = i+1, \ldots, m$. \\
+      $g_{ij} = 0; i = 1, \ldots, m;$ and $j = 1, \ldots, i$. \\
+			$\sum\limits_{j=1}^m g_{ij} = 1; i = 1, \ldots, m$ \cite{ac,ai}.\\
+The basis of chain procedure is $\alpha$ allocation and $\alpha$ propagation rule respectively. When any hypothesis is rejected the testing algorithm redistributes an arbitrary set of transition parameters among all non-rejected hypotheses which in consequence change the hypotheses weights and transition parameters.\\
+
+\begin{figure*}[ht]\centering 
+\includegraphics[scale=.6]{Chain}
+\caption{Chain procedure\cite{ai}}
+\label{fig:view}
+\end{figure*}
+
+\begin{itemize}
+\item Step1: If $p_1 \leq \alpha \omega_1$, null hypothesis of $H_1$ will be rejected then error rate of $H_1$ shall be split and transformed towards among next hypotheses. $H_1$ have to be removed from M and all hypotheses weights and transition parameters will be updated according to the following equations.\\
+\begin{quote}  
+Updated weights$(w_{ju})$  of hypotheses: $w_{ju} = w_j + w_1g_1j ; j \epsilon M$(Number of hypothesis).\\
+Updated Transition Parameters: $g_{jku} = \frac{g_{jk} + g_{j1}g_{1k}}{1 - g{j1}g{1j}}; (j,k \epsilon M)$. \cite{ai}
+\end{quote}  
+If $p_1 \nleqslant \alpha \omega_1$, go to step 2. 
+
+\item Steps $i = 2, \ldots, m-1$: If $p_i \leq \alpha\omega_i$, reject $H_i$ and respective index should be removed from M. Rest of hypotheses weights and transition parameters will be updated with corresponding equation of step1 and go to step $i + 1$. \\
+If $p_i \nleqslant \alpha \omega_i$ go to step $i + 1$.
+
+\item Step m: If $p_m \leq \alpha\omega_m$, reject $H_m$ and the specific index should be removed from M. Update the un-rejected hypotheses weights and transition parameters by following equation from step1. Then start again from first until there are no more hypotheses are rejected. \\
+If $p_m \nleqslant \alpha \omega_m$ keep hypotheses weights and transition parameters as it is. Afterwards, start again from step1. \cite{ai}
+\end{itemize}
+
+It also possible to construct a more powerful parametric version of Chain procedure.
+
+
+\newpage
+
+\section{Analysis} 
+We have categorized the analysis section in three subgroups. In first part, we deal with two non-parametric simple MTPs and try to compare between them regarding on flexibility and efficiency. In second section the task is to demonstrate the impact of different parameters on power in a multivariate setting. Third segment goes with the effects of weight distribution on power in fallback procedure.\\
+
+\subsection{Comparison between two Non-parametric simple MTPs}
+Success in clinical trial hugely depends on proper selection of MTPs. Based on trial objectives and available clinical and statistical information appropriate testing procedure have to be selected. In our analysis, we conduct an imaginary clinical trial where three doses of an experimental drug will be compare with placebo and later the power will be calculated in both simple non-parametric procedures. Our goal is to find out minimum power ($80\%$) in each and every endpoint with significance level $\alpha = 0.05$. For simplification we consider only two endpoints in the family.\\
+
+Lets assume a dose finding trial for type II diabetes patients where three different doses are labeled as A, B and C. Our aim is to find which dose levels are significantly better than placebo on both endpoints. In this comparison the higher dose levels B and C are primary dose levels of equal importance and lower dose level A is added to better understand the dose response relationship. \cite{ac} First endpoint is endpoint X(Hemoglobin A1c or HbA1c) and second one is endpoint Y(Fasting serum glucose). We have selected R and RStudio for our simulation and analysis. R is very convenient, user friendly and most popular for data analysis. A group of dynamic and dedicated researchers continuously put their effort to keep R up to date via adding new packages. Package 'mvtnorm'\cite{ar} provides sufficient functions to calculate power in multivariate environment.\\
+
+\newpage
+First of all we load package 'mvtnorm'. It would be a better idea to consider simulation as much as possible cause it gives more accurate result. In our analysis we consider $1000$ number of simulations. We assume that, 80 number of sample size is enough for each arm. To avoid type I error let $\alpha = 0.05$. Standardized effect sizes for two endpoints of first group are 0.55 and 0.63 respectively and standard deviations are 0.8 and 1. For simplification we set no any correlation between two endpoints of first group.\\
+
+\begin{Schunk}
+\begin{Sinput}
+library(mvtnorm)
+# number of simulations
+M <- 1000
+# sample size in each of four arm
+n <- 80
+# type I error
+alpha <- 0.05
+
+## Parameters of dose A
+# Standardized effect size(dosage) in two consecutive endpoint
+mu1 <- c(.55, .63)
+# Standard deviation sequentially 
+SD1 <- c(.8, 1)
+# for simplification we consider there are no any
+# correlation between endpoints
+rho1 <- 0
+# Covariance matrix
+S1 <- diag(SD1)
+S1[1,2] <- rho1
+S1[2,1] <- rho1
+\end{Sinput}
+\end{Schunk}
+Standardized effect sizes of group B are comparatively high than group A. We set the Standardized effect sizes are $0.68$ and $0.78$ sequentially and the standard deviations are $0.87$ and $1$. Here also we set zero correlation between endpoints. \\
+
+\newpage
+\begin{Schunk}
+\begin{Sinput}
+## Parameters of dose B
+# Standardized effect size(dosage) in two consecutive endpoint
+mu2 <- c(0.68, 0.78)
+# Standard deviation sequentially 
+SD2 <- c(.87, 1)
+# for simplification we consider there are no any
+# correlation between endpoints
+rho2 <- 0
+# Covariance matrix
+S2 <- diag(SD2)
+S2[1,2] <- rho2
+S2[2,1] <- rho2
+\end{Sinput}
+\end{Schunk}
+Standardized effect sizes of group C are highest among all. Those are $0.73$ and $0.81$ consecutively. Let standard deviations are $1.0$ and $0.9$ sequentially. As like as above here also we do not consider any correlation between endpoints. \\
+\begin{Schunk}
+\begin{Sinput}
+## Parameters of dose c
+# Standardized effect size(dosage) in two consecutive endpoint
+mu3 <- c(0.73, 0.81)
+# Standard deviation sequentially 
+SD3 <- c(1, .9)
+# for simplification we consider there are no any
+# correlation between endpoints
+rho3 <- 0
+# Covariance matrix
+S3 <- diag(SD3)
+S3[1,2] <- rho3
+S3[2,1] <- rho3
+\end{Sinput}
+\end{Schunk}
+
+At last we set parameters for placebo. Consider that, the dosage less than 0.40 has no any clinical response. Therefore, we set Standardized effect sizes for placebo are $0.20$ and $0.32$ consecutively. In-addition standard deviations are $1.00$ and $0.95$. Let here also no any correlation between two endpoints.  \\
+
+\begin{Schunk}
+\begin{Sinput}
+# Parameters of placebo
+# Standardized effect size(dosage) in two consecutive endpoint
+mu4 <- c(0.20, 0.32) # Consider that, dosage less than .40 has 
+# no any Clinical response. 
+# Standard deviation sequentially
+SD4 <- c(1, .95)
+# for simplification we consider there are no any
+# correlation between endpoints
+rho4 <- 0
+# Covariance matrix
+S4 <- diag(SD4)
+S4[1,2] <- rho4
+S4[2,1] <- rho4
+\end{Sinput}
+\end{Schunk}
+
+below, we can see the R codes for simulation of three doses, sequentially.\\
+
+\begin{Schunk}
+\begin{Sinput}
+
+### Test for first group or group a
+pvals1 <- numeric(M)
+pvals2 <- numeric(M)
+for(i in seq_len(M)){
+  X1 <- rmvnorm(n, mean = mu1, sigma = S1)
+  X2 <- rmvnorm(n, mean = mu4, sigma = S4)
+  
+  pvals1[i] <- t.test(X1[,1], X2[,1])$p.value
+  pvals2[i] <- t.test(X1[,2], X2[,2])$p.value
+}
+
+### Test for second group or group B
+pvals3 <- numeric(M)
+pvals4 <- rep(1, M)
+for(i in seq_len(M)){
+  X3 <- rmvnorm(n, mean = mu2, sigma = S2)
+  X4 <- rmvnorm(n, mean = mu4, sigma = S4)
+  
+  pvals3[i] <- t.test(X3[,1], X4[,1])$p.value
+  pvals4[i] <- t.test(X3[,2], X4[,2])$p.value
+}
+
+### Simulation for Third group or group c
+pvals5 <- numeric(M)
+pvals6 <- rep(1, M)
+for(i in seq_len(M)){
+  X5 <- rmvnorm(n, mean = mu3, sigma = S3)
+  X6 <- rmvnorm(n, mean = mu4, sigma = S4)
+  
+  pvals5[i] <- t.test(X5[,1], X6[,1])$p.value
+  pvals6[i] <- t.test(X5[,2], X6[,2])$p.value
+}
+
+\end{Sinput}
+\end{Schunk}
+
+At first we take a look on the power considering two equally important primary endpoints. We assume that, the endpoints are not independent to each other. Thus, the FWER should be half of alpha. We start sequentially from dose A. 
+
+\begin{Schunk}
+\begin{Sinput}
+## for dose A
+# empirical power at first endpoint
+sum(pvals1 < 0.5*alpha)/M
+\end{Sinput}
+\begin{Soutput}
+[1] 0.526
+\end{Soutput}
+\begin{Sinput}
+# empirical power at second endpoint
+sum(pvals2 < 0.5*alpha)/M
+\end{Sinput}
+\begin{Soutput}
+[1] 0.379
+\end{Soutput}
+\begin{Sinput}
+# empirical power at least one endpoint
+sum((pvals1 < 0.5*alpha) | (pvals2 < 0.5*alpha))/M
+\end{Sinput}
+\begin{Soutput}
+[1] 0.72
+\end{Soutput}
+\end{Schunk}
+The both endpoints are lacking of sufficient power hence the standardized effect sizes of dose A is comparatively small. First endpoint is more powerful than the second endpoint. Whatever the results are expected. \\
+\begin{Schunk}
+\begin{Sinput}
+# for dose B
+# empirical power at first endpoint
+sum(pvals3 < 0.5*alpha)/M
+\end{Sinput}
+\begin{Soutput}
+[1] 0.813
+\end{Soutput}
+\begin{Sinput}
+# empirical power at second endpoint
+sum(pvals4 < 0.5*alpha)/M
+\end{Sinput}
+\begin{Soutput}
+[1] 0.743
+\end{Soutput}
+\begin{Sinput}
+# empirical power at least one endpoint
+sum((pvals3 < 0.5*alpha) | (pvals4 < 0.5*alpha))/M
+\end{Sinput}
+\begin{Soutput}
+[1] 0.957
+\end{Soutput}
+\end{Schunk}
+Here we get sufficient power at first endpoint but the second endpoint still in under-power. The empirical power at least one endpoint is very high. That means, probability of getting significant result either first or second endpoint is very large. At last we will look at dose C. \\
+\begin{Schunk}
+\begin{Sinput}
+# for dose C
+# empirical power at first endpoint
+sum(pvals5 < 0.5*alpha)/M
+\end{Sinput}
+\begin{Soutput}
+[1] 0.853
+\end{Soutput}
+\begin{Sinput}
+# empirical power at second endpoint
+sum(pvals6 < 0.5*alpha)/M
+\end{Sinput}
+\begin{Soutput}
+[1] 0.839
+\end{Soutput}
+\begin{Sinput}
+# empirical power at least one endpoint
+sum((pvals5 < 0.5*alpha) | (pvals6 < 0.5*alpha))/M
+\end{Sinput}
+\begin{Soutput}
+[1] 0.975
+\end{Soutput}
+\end{Schunk}
+Since, the standardized effect sizes of dose C is very high that's why, both endpoints of dose C have enough power. The overall results are expected. In case of all three doses the first endpoints have more power than the second endpoints. Because of, the first standardized effect size of placebo is relatively small. \\
+Now we come into our main concern. Firstly, we calculate power by the fixed-sequence procedure and later on by fallback. Starting from dose A, we calculate sequentially. \\
+
+\begin{Schunk}
+\begin{Sinput}
+## for dose A
+# empirical power at first endpoint
+sum(pvals1 < alpha)/M
+\end{Sinput}
+\begin{Soutput}
+[1] 0.616
+\end{Soutput}
+\begin{Sinput}
+first.a <- pvals1 < alpha
+# empirical power at second endpoint
+sum(pvals2[first.a] < alpha)/M
+\end{Sinput}
+\begin{Soutput}
+[1] 0.292
+\end{Soutput}
+\end{Schunk}
+The power difference between second endpoint to first endpoint is almost double. Empirical power at least one endpoint is identical to the power of the first endpoint. Here the power difference between two endpoints are comparatively high than the previous calculation.  \\
+\begin{Schunk}
+\begin{Sinput}
+## for dose B
+# empirical power at first endpoint
+sum(pvals3 < alpha)/M
+\end{Sinput}
+\begin{Soutput}
+[1] 0.878
+\end{Soutput}
+\begin{Sinput}
+first.b <- pvals3 < alpha
+# empirical power at second endpoint
+sum(pvals4[first.b] < alpha)/M
+\end{Sinput}
+\begin{Soutput}
+[1] 0.722
+\end{Soutput}
+\end{Schunk}
+As like as previous calculation here also we get enough power at first endpoint and second endpoint has lacks of sufficient power. The power difference between two endpoints are almost same like previous calculation. \\
+\begin{Schunk}
+\begin{Sinput}
+## for dose C
+# empirical power at first endpoint
+sum(pvals5 < alpha)/M
+\end{Sinput}
+\begin{Soutput}
+[1] 0.91
+\end{Soutput}
+\begin{Sinput}
+first.c <- pvals5 < alpha
+# empirical power at second endpoint
+sum(pvals6[first.c] < alpha)/M
+\end{Sinput}
+\begin{Soutput}
+[1] 0.82
+\end{Soutput}
+\end{Schunk}
+
+At last in dose C we get enough power at both endpoints. In all three cases the power differences between two endpoints are relatively high than the previous calculation. Moreover, the overall results of three doses are expected. In all three cases or all two endpoints the fixed sequence procedure cases the empirical power of at least one endpoint is identical to the power of first endpoint and the empirical power of at both endpoints are identical to the power of the second endpoint. \\
+At last we apply Fallback procedure. Let assume first endpoint is clinically more important than second endpoint. Thus the first one gets a little bit more weight than the second one. Let, weight of the first endpoint is $w_1 = 0.6$ and the second endpoint is $w_2 = 0.4$. \\
+
+\begin{Schunk}
+\begin{Sinput}
+## Applying Fallback procedure in all three groups/dose
+# weight distribution sequentially 
+w1 <- 0.6
+w2 <- 0.4
+
+# dose A
+# empirical power at first endpoint
+sum(pvals1 < w1*alpha)/M
+\end{Sinput}
+\begin{Soutput}
+[1] 0.55
+\end{Soutput}
+\begin{Sinput}
+first <- pvals1 < w1*alpha 
+# empirical power at second endpoint
+(sum(pvals2[first] < alpha) + sum(pvals2[!first] < w2*alpha))/M
+\end{Sinput}
+\begin{Soutput}
+[1] 0.428
+\end{Soutput}
+\begin{Sinput}
+second <- pvals2[!first] < w2*alpha
+# empirical power at least one endpoints by dose a
+(sum(first) + sum(second))/M
+\end{Sinput}
+\begin{Soutput}
+[1] 0.717
+\end{Soutput}
+\end{Schunk}
+Likewise previous calculations here also dose A has lacks of power at both endpoints. But one noticeable point is that, the second endpoint achieved more power than the previous calculations. At next we look on dose B. \\
+\begin{Schunk}
+\begin{Sinput}
+# dose B
+## empirical power at first endpoint
+sum(pvals3 < w1*alpha)/M
+\end{Sinput}
+\begin{Soutput}
+[1] 0.831
+\end{Soutput}
+\begin{Sinput}
+third <- pvals3 < w1*alpha
+# empirical power at second endpoint
+(sum(pvals4[third] < alpha) + sum(pvals4[!third] < w2*alpha))/M
+\end{Sinput}
+\begin{Soutput}
+[1] 0.805
+\end{Soutput}
+\begin{Sinput}
+fourth <- pvals4[!third] < w2*alpha
+# empirical power at least one or both endpoints
+(sum(third) + sum(fourth))/M
+\end{Sinput}
+\begin{Soutput}
+[1] 0.954
+\end{Soutput}
+\end{Schunk}
+This is the most interesting point. At first time we get enough power at both endpoints by dose B. \\ 
+\begin{Schunk}
+\begin{Sinput}
+# dose C
+# empirical power at first endpoint
+sum(pvals5 < w1*alpha)/M
+\end{Sinput}
+\begin{Soutput}
+[1] 0.867
+\end{Soutput}
+\begin{Sinput}
+fifth <- pvals5 < w1*alpha
+# empirical power at second endpoint
+(sum(pvals6[fifth] < alpha) + sum(pvals6[!fifth] < w2*alpha))/M
+\end{Sinput}
+\begin{Soutput}
+[1] 0.888
+\end{Soutput}
+\begin{Sinput}
+sixth <- pvals6[!fifth] < w2*alpha
+# empirical power at least one or both endpoints
+(sum(fifth) + sum(sixth))/M
+\end{Sinput}
+\begin{Soutput}
+[1] 0.972
+\end{Soutput}
+\end{Schunk}
+Here also dose C has sufficient power at both endpoints. The all three doses result by fallback procedure is expected. The most interesting feature of the fallback procedure is that, all endpoints have sufficient power regardless of their place in a family. Our above results also reflect this fact. There is no doubt that, the fallback procedure is more powerful than the fixed-sequence procedure. \\ 
+Dose A is under-powered since it's standardized effect size is very low. Dose B and C both look very striking although the second endpoint of dose B lacks sufficient power in the fixed-sequence procedure but in-case of the fallback procedure both endpoints have adequate power. The treatment effect hugely depends on the standardized effect size. Here, we have to careful about the probability of getting significant result erroneously. Best decision is to take account sizes of the treatment effect of all groups considering their standardized effect sizes. \cite{ae} In our trial dose B is most powerful.\\
+
+\newpage
+\subsection{Analysis on parameters}
+The aim of this section is to elucidate the relation of parameters on power in a multivariate setting. The basis of our evaluation are simulations with the help of 'mvtnorm' package\cite{ar} in R. Then, stretch out the results using functions from 'ggplot2' package\cite{as}. For simulation we take parameters of dose B and placebo from our previous example and nominal significance level considered as $\alpha = 0.05$.\\
+
+\subsubsection{Effects of correlation on power} 
+We all know that, correlation(rho) has a effect on the power but predetermination on the extend of correlation is not a easy task. It's governed by a complex covariance matrix. For illustration imagine a trial like our previous example. Here,  \\
+
+Standard deviation of dose in first endpoint = $SD_{11}$ \\
+Standard deviation of dose in second endpoint = $SD_{12}$ \\
+Standard deviation of placebo in first endpoint = $SD_{21}$ \\
+Standard deviation of placebo in second endpoint = $SD_{22}$. \\
+The covariance matrix for dose (sigma1) $\sigma_1$ = $$\left[\begin{array}
+{cc}
+SD_{11} & \delta_1\\
+\delta_1 & SD_{12}	\\		
+\end{array}\right]$$
+Here, $\delta_1 = \rho*\sqrt{SD_{11}}*\sqrt{SD_{12}}$ \\
+again, the covariance matrix for placebo (sigma2) $\sigma_2$ = $$\left[\begin{array}
+{cc}
+SD_{21} & \delta_2\\
+\delta_2 & SD_{22}	\\		
+\end{array}\right]$$
+Here, $\delta_2 = \rho*\sqrt{SD_{21}}*\sqrt{SD_{22}}$.\\ 
+In our simulation we assess the power dependent on correlation(rho), where rho is ranging from .01 to 1.0 and in steps by 0.1. Now we evaluate correlation between power and correlation(rho) by applying Spearman correlation procedure. In simulation we denote correlation as s and to get more accurate result here we apply 100000 times simulation. \\
+
+\begin{Schunk}
+\begin{Sinput}
+# correlation between power at first endpoint & correlation(rho)
+# in fixed-sequence procedure 
+cor.test(s, power3, method = "spearman")
+\end{Sinput}
+\begin{Soutput}
+Spearman rank correlation rho
+
+data:  s and power3
+S = 202, p-value = 0.5367
+alternative hypothesis: true rho is not equal to 0
+sample estimates:
+       rho 
+0.2484848
+\end{Soutput}
+\begin{Sinput}
+# correlation between power at first endpoint & correlation(rho)
+# in fallback procedure
+cor.test(s, power.fall3, method = "spearman")
+\end{Sinput}
+\begin{Soutput}
+	Spearman rank correlation rho
+
+data:  s and power.fall3
+S = 132, p-value = 0.5835
+alternative hypothesis: true rho is not equal to 0
+sample estimates:
+rho 
+0.2484848
+\end{Soutput}
+\begin{Sinput}
+# correlation between power at second endpoint & correlation(rho)
+# in fixed-sequence procedure
+cor.test(s, power4, method = "spearman")
+\end{Sinput}
+\begin{Soutput}
+	Spearman rank correlation rho
+
+data:  s and power4
+S = 3.6637e-14, p-value < 2.2e-16
+alternative hypothesis: true rho is not equal to 0
+sample estimates:
+rho 
+  1 
+\end{Soutput}
+\begin{Sinput}
+# correlation between power at second endpoint & correlation(rho)
+# in fallback procedure
+cor.test(s, power.fall4, method = "spearman")
+\end{Sinput}
+\begin{Soutput}
+	Spearman rank correlation rho
+
+data:  s and power.fall4
+S = 326, p-value < 2.2e-16
+alternative hypothesis: true rho is not equal to 0
+sample estimates:
+rho 
+ -0.9515152
+\end{Soutput}
+\end{Schunk}
+The results of 'Spearman' correlation is unexpected. Whatever, for ensure we did several simulation and all results are likely identical. In-addition standard deviation has a huge influence on correlation and as much as we go far from first endpoint the correlation(rho) also increase with ascending order. Although the correlation score at second endpoint by fallback procedure is quite reasonable  but it's very unlikely that, correlation and power has a strong positive correlation as our result in second endpoint by fixed-sequence procedure. Although the p-values at first endpoints are very weak but at second endpoints in both procedure it's very strong. We know that, in-case of the fixed-sequence procedure at second endpoint only consider if the first endpoint has significant result. \\ Now we look how many cases significant results are achieved at first endpoint by both procedure.
+\begin{Schunk}
+\begin{Sinput}
+# by fixed-sequence
+table(first.fixc)
+\end{Sinput}
+\begin{Soutput}
+first.fixc
+FALSE  TRUE 
+12349 87651
+\end{Soutput}
+by Fallback
+\begin{Sinput}
+table(first.fallc)
+\end{Sinput}
+\begin{Soutput}
+first.fallc
+FALSE  TRUE 
+17189 82811  
+\end{Soutput}
+\end{Schunk}
+both results are not showing very much difference. Next, we look at how many cases the second endpoint by fallback procedure we get significant result but at first endpoint is not significant.
+\begin{Schunk}
+\begin{Sinput}
+table(second.fallc2)
+\end{Sinput}
+\begin{Soutput}
+second.fallc2
+FALSE  TRUE 
+15686  1503  
+\end{Soutput}
+\end{Schunk}
+The result is noteworthy.
+At last we will look how many cases give significant result at all endpoints by both procedures.
+\begin{Schunk}
+\begin{Sinput}
+# Fixed-sequence
+table(second.fixc)
+\end{Sinput}
+\begin{Soutput}
+second.fixc
+FALSE  TRUE 
+ 6518 81133  
+\end{Soutput}
+\begin{Sinput}
+# Fallback
+table(second.fallc1)
+\end{Sinput}
+\begin{Soutput} 
+second.fallc1
+FALSE  TRUE 
+ 4168 78643 
+\end{Soutput}
+\end{Schunk}
+The result of \texttt{second.fallc2} has a noticeable difference from \texttt{second.fixc}
+ and \texttt{second.
+fallc1}. The cases of lower probability can not passed the first endpoint therefore, they are not considered at second endpoint by the fixed-sequence procedure. Other-hand regardless of significance at the first endpoint total number of cases are considered at second endpoint by fallback procedure. Thus, it's obvious that frequency of failing will be relatively high at second endpoint by fallback procedure from it's fixed-sequence counterpart. So, our results are not unusual. \\
+For a better comprehend we can take a close look on corresponding figures. We apply 'ggplot2' package \cite{as} for drawing in RStudio. At first we plot first endpoint and see how the power varies between the fixed-sequence and the fallback procedure. \\
+\begin{figure*}[!h]
+  \begin{subfigure}[!h]{0.5\textwidth}
+    \includegraphics[width=\textwidth]{co_1st_fix.pdf}
+    \caption{Correlation at first endpoint by fixed-sequence procedure}
+    \label{fig:1}
+  \end{subfigure}
+  %
+  \begin{subfigure}[!h]{0.5\textwidth}
+    \includegraphics[width=\textwidth]{co_1st_fall.pdf}
+    \caption{Correlation at first endpoint by fallback procedure}
+    \label{fig:2}
+  \end{subfigure}
+\end{figure*}
+\Floatbarrier
+
+Although in first endpoint the nominal significance level for fallback procedure is small($w_1*\alpha$) but our result shows that, it has a little impact and both figures are near to identical. Now we look on second endpoint. \\
+
+\newpage
+\begin{figure*}[!h]
+  \begin{subfigure}[!h]{0.5\textwidth}
+    \includegraphics[width=\textwidth]{co_2nd_fix.pdf}
+    \caption{Correlation at second endpoint by fixed-sequence procedure}
+    \label{fig:3}
+  \end{subfigure}
+  %
+  \begin{subfigure}[!h]{0.5\textwidth}
+    \includegraphics[width=\textwidth]{co_2nd_fall.pdf}
+    \caption{Correlation at second endpoint by fallback procedure}
+    \label{fig:4}
+  \end{subfigure}
+\end{figure*}
+\Floatbarrier
+
+Above figures describe a different setting. Although the correlation values are completely opposite from each other but, the impact on power is not that much extreme. The power variation in fallback procedure occurs within a very small scale. 
+ 
+
+\newpage
+\subsubsection{Effects of sample size on power} 
+We know that, sample size has a positive influence on power. But it is unethical to take a large sample size unnecessarily. Therefore, it is an important task to find out an exact number considering both sense of view. In simulation we take into account sample size(n) varies from 40 to 150 by steps of 10 in both endpoints and try to find out it's impact on the power. For simplification we consider $\delta_1 = \delta_2 = 0$. Before going into figures we will look at 'Spearman' correlation between sample size and the power. \\
+
+\begin{Schunk}
+\begin{Sinput}
+# At first endpoint by fixed-sequence
+cor.test(n, power5, method = "spearman")
+\end{Sinput}
+\begin{Soutput}
+	Spearman rank correlation rho
+
+data:  n and power5
+S = 2, p-value < 2.2e-16
+alternative hypothesis: true rho is not equal to 0
+sample estimates:
+rho 
+ 1
+\end{Soutput}
+\begin{Sinput}
+# At first endpoint by fallback
+cor.test(n, power.fall5, method = "spearman")
+\end{Sinput}
+\begin{Soutput}
+	Spearman rank correlation rho
+
+data:  n and power.fall5
+S = 0, p-value < 2.2e-16
+alternative hypothesis: true rho is not equal to 0
+sample estimates:
+rho 
+  1 
+\end{Soutput}
+\begin{Sinput}
+# At second endpoint by fixed-sequence
+cor.test(n, power6, method = "spearman")
+\end{Sinput}
+\begin{Soutput}
+	Spearman rank correlation rho
+
+data:  n and power6
+S = 0, p-value < 2.2e-16
+alternative hypothesis: true rho is not equal to 0
+sample estimates:
+rho 
+  1 
+\end{Soutput}
+\begin{Sinput}
+# At second endpoint by fallback
+cor.test(n, power.fall6, method = "spearman")
+\end{Sinput}
+\begin{Soutput}
+	Spearman rank correlation rho
+
+data:  n and power.fall6
+S = 0, p-value < 2.2e-16
+alternative hypothesis: true rho is not equal to 0
+sample estimates:
+rho 
+  1 
+\end{Soutput}
+\end{Schunk}  
+Above results recount that, regardless the position of endpoints sample size has a strong positive influence on the power and the probability of getting such influence is very high. Now we give a look on the figures. \\
+
+\newpage
+\begin{figure}[!h]
+  \begin{subfigure}[!h]{0.5\textwidth}
+    \includegraphics[width=\textwidth]{s_1st_fix.pdf}
+    \caption{Sample size effect on power at first endpoint by fixed-sequence procedure}
+    \label{fig:7}
+  \end{subfigure}
+  %
+  \begin{subfigure}[!h]{0.5\textwidth}
+    \includegraphics[width=\textwidth]{s_1st_fall.pdf}
+    \caption{Sample size effect on power at first endpoint by fallback procedure}
+    \label{fig:8}
+  \end{subfigure}
+	%
+  \begin{subfigure}[!h]{0.5\textwidth}
+    \includegraphics[width=\textwidth]{s_2nd_fix.pdf}
+    \caption{Sample size effect on power at second endpoint by fixed-sequence procedure}
+    \label{fig:9}
+  \end{subfigure}
+  %
+  \begin{subfigure}[!h]{0.5\textwidth}
+    \includegraphics[width=\textwidth]{s_2nd_fall.pdf}
+    \caption{Sample size effect on power at second endpoint by fallback procedure}
+    \label{fig:10}
+  \end{subfigure}
+\end{figure}
+\Floatbarrier 
+The figure pairs are almost identical. All four figures consist a sharp increase of power concerning with the sample sizes. The figure at second endpoint by the fixed sequence procedure showing more influence than others. It has no doubt that, the sample size has a solid influence on power regardless the position of endpoints or what procedure is applied and the influence is almost same.  \\  
+
+\newpage
+\subsubsection{Effects of standardized effect size on power} 
+We will explain separately influence of each standardized effect size on the power at both endpoints by two different simulations. Firstly we assume that, the second standardized effect size is fixed at $0.78$ and the first standardized effect size is ranging from $0.25$ to $1.00$ with breaks of $0.05$. For simplification we did not take into account any correlation between two endpoints. That mean's, $\delta_1 = \delta_2 = 0$. First of all we look at 'Spearman' correlation between the first standardized effect size and the power of each endpoint. \\ 
+
+\begin{Schunk}
+\begin{Sinput}
+# At first endpoint by fixed-sequence
+cor.test(mu2[1:16], power7, method = "spearman")
+\end{Sinput}
+\begin{Soutput}
+	Spearman rank correlation rho
+
+data:  mu2[1:16] and power7
+S = 0, p-value = 6.981e-06
+alternative hypothesis: true rho is not equal to 0
+sample estimates:
+rho 
+  1 
+\end{Soutput}
+\begin{Sinput}
+# At first endpoint by fallback
+cor.test(mu2[1:16], power.fall7, method = "spearman")
+\end{Sinput}
+\begin{Soutput}
+	Spearman rank correlation rho
+
+data:  mu2[1:16] and power.fall7
+S = 0, p-value = 6.981e-06
+alternative hypothesis: true rho is not equal to 0
+sample estimates:
+rho 
+  1 
+\end{Soutput}
+\begin{Sinput}
+# At second endpoint by fixed-sequence
+cor.test(mu2[1:16], power8, method = "spearman")
+\end{Sinput}
+\begin{Soutput}
+	Spearman rank correlation rho
+
+data:  mu2[1:16] and power8
+S = 6, p-value = 3.243e-06
+alternative hypothesis: true rho is not equal to 0
+sample estimates:
+      rho 
+0.9782353
+\end{Soutput}
+\begin{Sinput}
+# At second endpoint by fallback
+cor.test(mu2[1:16], power.fall8, method = "spearman")
+\end{Sinput}
+\begin{Soutput}
+	Spearman rank correlation rho
+
+data:  mu2[1:16] and power.fall8
+S = 23.065, p-value = 1.266e-09
+alternative hypothesis: true rho is not equal to 0
+sample estimates:
+      rho 
+0.8970588
+\end{Soutput}
+\end{Schunk}
+The result of 'Spearman' correlation demonstrate that, the first standardized effect size has a clear influence on the power at first as well as at the second endpoint. It is usual that, the influence will be comparatively small at second endpoint than the first endpoint. The impact also relatively high in fixed-sequence than the fallback procedure. In addition the p-values are very strong in all endpoints. 
+Now we visualize above results by 'ggplot2' package \cite{as} in RStudio. \\ 
+
+\begin{figure}
+  \begin{subfigure}[!h]{0.5\textwidth}
+    \includegraphics[width=\textwidth]{ef_1st_fix.pdf}
+    \caption{first standardized effect size influence on power at first endpoint by fixed-sequence procedure}
+    \label{fig:11}
+  \end{subfigure}
+  %
+  \begin{subfigure}[!h]{0.5\textwidth}
+    \includegraphics[width=\textwidth]{ef_1st_fall.pdf}
+    \caption{first standardized effect size influence on power at first endpoint by fallback procedure}
+    \label{fig:12}
+  \end{subfigure}
+	%
+  \begin{subfigure}[!h]{0.5\textwidth}
+    \includegraphics[width=\textwidth]{ef_2nd_fix.pdf}
+    \caption{first standardized effect size influence on power at second endpoint by fixed-sequence procedure}
+    \label{fig:13}
+  \end{subfigure}
+  %
+  \begin{subfigure}[!h]{0.5\textwidth}
+    \includegraphics[width=\textwidth]{ef_2nd_fall.pdf}
+    \caption{first standardized effect size influence on power at second endpoint by fallback procedure}
+    \label{fig:14}
+  \end{subfigure} 
+\end{figure}
+\Floatbarrier 
+
+\newpage
+One noticeable scenario is, the influence rapidly decreased and confidence band is more wide at second endpoint in-case of the fallback procedure comparatively with it's fixed-sequence counterpart. For a better understanding we visualize both figures again but, with sizable y scale. \\
+
+
+\begin{figure*}[h]
+  \begin{subfigure}[h]{0.5\textwidth}
+    \includegraphics[width=\textwidth]{ef_2nd_fixY.pdf}
+    \caption{first standardized effect size influence on power at second endpoint by fixed-sequence procedure with large Y scale}
+    \label{fig:15}
+  \end{subfigure}
+  %
+	\begin{subfigure}[h]{0.5\textwidth}
+    \includegraphics[width=\textwidth]{ef_2nd_fallY.pdf}
+    \caption{first standardized effect size influence on power at second endpoint by fallback procedure with large Y scale}
+    \label{fig:16}
+  \end{subfigure}
+\end{figure*} 
+Above figures tell that, although the impact of first standardized effect size on second endpoint remain
+pristine by the fixed sequence procedure but it decrease hugely in case of the fallback procedure. The figure by fallback procedure is near to stable because of, the second standardized effect size is fixed.  
+\newpage
+At next our aim is to evaluate the second standardized effect size order from $0.25$ to $1.00$ with steps of $0.05$. Here we considered that, the first standardized effect size is fixed at $0.68$. As well as before here also we look at first into the correlation score.
+\begin{Schunk}
+\begin{Sinput}
+# At first endpoint by fixed-sequence
+cor.test(mu2[,2], power9, method = "spearman")
+\end{Sinput}
+\begin{Soutput}
+	Spearman rank correlation rho
+
+data:  mu2[, 2] and power9
+S = 756.06, p-value = 0.68
+alternative hypothesis: true rho is not equal to 0
+sample estimates:
+      rho 
+-0.2468621
+\end{Soutput}
+\begin{Sinput}
+# At first endpoint by fallback
+cor.test(mu2[,2], power.fall9, method = "spearman")
+\end{Sinput}
+\begin{Soutput}
+	Spearman rank correlation rho
+
+data:  mu2[, 2] and power.fall9
+S = 777.65, p-value = 0.5957
+alternative hypothesis: true rho is not equal to 0
+sample estimates:
+       rho 
+0.1635966
+\end{Soutput}
+\begin{Sinput}
+# At second endpoint by fixed-sequence
+cor.test(mu2[,2], power10, method = "spearman")
+\end{Sinput}
+\begin{Soutput}
+	Spearman rank correlation rho
+
+data:  mu2[, 2] and power10
+S = 8, p-value = 1.88e-06
+alternative hypothesis: true rho is not equal to 0
+sample estimates:
+      rho 
+0.9911765
+\end{Soutput}
+\begin{Sinput}
+# At second endpoint by fallback
+cor.test(mu2[,2], power.fall10, method = "spearman")
+\end{Sinput}
+\begin{Soutput}
+	Spearman rank correlation rho
+
+data:  mu2[, 2] and power.fall10
+S = 8, p-value = 1.88e-06
+alternative hypothesis: true rho is not equal to 0
+sample estimates:
+      rho 
+0.9911765
+\end{Soutput}
+\end{Schunk}
+Literally it is unrealistic that, the second standardized effect size has a influence on the first endpoint. The scores what we get at first endpoints causes for random numbers during simulation and it varies in each simulation. The p-values are also very weak at first endpoints in both procedures. On the other-hand there are no any doubt regarding the impact at second endpoints. Now we give structure of above scores. \\
+
+\newpage
+\begin{figure*}[!h]
+  \begin{subfigure}[!h]{0.5\textwidth}
+    \includegraphics[width=\textwidth]{es_1st_fix.pdf}
+    \caption{second standardized effect size influence on power at first endpoint by fixed-sequence procedure}
+    \label{fig:17}
+  \end{subfigure}
+  %
+  \begin{subfigure}[!h]{0.5\textwidth}
+    \includegraphics[width=\textwidth]{es_1st_fall.pdf}
+    \caption{second standardized effect size influence on power at first endpoint by fallback procedure}
+    \label{fig:18}
+  \end{subfigure}
+	%
+  \begin{subfigure}[!h]{0.5\textwidth}
+    \includegraphics[width=\textwidth]{es_2nd_fix.pdf}
+    \caption{second standardized effect size influence on power at second endpoint by fixed-sequence procedure}
+    \label{fig:19}
+  \end{subfigure}
+  %
+  \begin{subfigure}[!h]{0.5\textwidth}
+    \includegraphics[width=\textwidth]{es_2nd_fall.pdf}
+    \caption{second standardized effect size influence on power at second endpoint by fallback procedure}
+    \label{fig:20}
+  \end{subfigure}
+\end{figure*}
+\Floatbarrier 
+Although, the first endpoint by fixed sequence procedure have slightly more power than the fallback procedure but the confidence band is almost same in both figures. Other-hand the influence is more strong at second endpoint by the fallback procedure than it's fixed sequence counterpart.  
+
+\newpage
+\subsection{Effects of weight distribution on power at Fallback procedure} 
+In general weights($w_1,\ldots,w_n$) are distributed among endpoints based on clinical importance. Thus, it has no any specific order of distribution like ascending or descending. Whatever it seems that, weight distribution has a certain effect on success of clinical trial. In this part, we recalculate power of dose B at two consecutive endpoints with different power distribution to present this effect. Our distribution pairs are $(0.6,0.4) (0.4,0.6) (0.5,0.5) (0.7,0.3)$ and we start sequentially from beginning. We already showed the first pair before but, we want to mention again for better perceive. \\
+\begin{Schunk}
+\begin{Sinput}
+w1 <- 0.6
+w2 <- 0.4
+# Empirical power at first endpoint
+sum(pvals3 < w1*alpha)/M
+\end{Sinput}
+\begin{Soutput}
+[1] 0.831
+\end{Soutput}
+\begin{Sinput}
+third <- pvals3 < w1*alpha
+# empirical power at second endpoint
+(sum(pvals4[third] < alpha) + sum(pvals4[!third] < w2*alpha))/M
+\end{Sinput}
+\begin{Soutput}
+[1] 0.805
+\end{Soutput}
+\begin{Sinput}
+fourth <- pvals4[!third] < w2*alpha
+# empirical power at least one or both endpoints
+(sum(third) + sum(fourth))/M
+\end{Sinput}
+\begin{Soutput}
+[1] 0.954
+\end{Soutput}
+\end{Schunk}
+
+The result is nice. Then we go with second pair. \\
+
+\begin{Schunk}
+\begin{Sinput}
+w1 <- 0.4
+w2 <- 0.6
+# Empirical power at first endpoint
+sum(pvals3 < w1*alpha)/M
+\end{Sinput}
+\begin{Soutput}
+[1] 0.786
+\end{Soutput}
+\begin{Sinput}
+third <- pvals3 < w1*alpha
+# empirical power at second endpoint
+(sum(pvals4[third] < alpha) + sum(pvals4[!third] < w2*alpha))/M
+\end{Sinput}
+\begin{Soutput}
+[1] 0.815
+\end{Soutput}
+\begin{Sinput}
+fourth <- pvals4[!third] < w2*alpha
+# empirical power at least one or both endpoints
+(sum(third) + sum(fourth))/M
+\end{Sinput}
+\begin{Soutput}
+[1] 0.953
+\end{Soutput}
+\end{Schunk}
+The first endpoint lacks of sufficient power. Then we look on the power calculation of next pairs. \\
+\begin{Schunk}
+\begin{Sinput}
+w1 <- 0.5
+w2 <- 0.5
+# Empirical power at first endpoint
+sum(pvals3 < w1*alpha)/M
+\end{Sinput}
+\begin{Soutput}
+[1] 0.81
+\end{Soutput}
+\begin{Sinput}
+third <- pvals3 < w1*alpha
+# empirical power at second endpoint
+(sum(pvals4[third] < alpha) + sum(pvals4[!third] < w2*alpha))/M
+\end{Sinput}
+\begin{Soutput}
+[1] 0.811
+\end{Soutput}
+\begin{Sinput}
+fourth <- pvals4[!third] < w2*alpha
+# empirical power at least one or both endpoints
+(sum(third) + sum(fourth))/M
+\end{Sinput}
+\begin{Soutput}
+[1] 0.952
+\end{Soutput}
+\end{Schunk}
+The result reflects that, the weight distribution is perfect. At last we look on the power calculation of remaining pair.
+\begin{Schunk}
+\begin{Sinput}
+w1 <- 0.7
+w2 <- 0.3
+# Empirical power at first endpoint
+sum(pvals3 < w1*alpha)/M
+\end{Sinput}
+\begin{Soutput}
+[1] 0.844
+\end{Soutput}
+\begin{Sinput}
+third <- pvals3 < w1*alpha
+# empirical power at second endpoint
+(sum(pvals4[third] < alpha) + sum(pvals4[!third] < w2*alpha))/M
+\end{Sinput}
+\begin{Soutput}
+[1] 0.797
+\end{Soutput}
+\begin{Sinput}
+fourth <- pvals4[!third] < w2*alpha
+# empirical power at least one or both endpoints
+(sum(third) + sum(fourth))/M
+\end{Sinput}
+\begin{Soutput}
+[1] 0.947
+\end{Soutput}
+\end{Schunk}
+Although, the second endpoint has little scarcity of power but it is not too bad. Considering overall result we can reach into a decision that, if both endpoints have same weight or first endpoint has slightly more weight then we can expect a good result.   
+
+
+\newpage
+\section{Discussion} 
+In modern days scenario of multiple testing procedures with ordered objectives are very common in clinical trial. That's why, it is very crucial to comprehend behavior of different parameters and how they are inter-connected with each other on multivariate platform. There are no any specific formula or method to analyze these parameters on multidimensional complex clinical trial and researchers have to depend on mostly in simulation based approaches. With cautious calculation of sample size and power researchers are controlling FWER in a strong sense to avoid type I error rate. Here, extra caution is necessary cause even a incorrect calculation in a single endpoint can bring false decision. \cite{af} \\
+
+Unfortunately, it is not possible to accumulate all uni-variate case to a multivariate-hypothesis case to control type II error rate like as type I error rate. In this case it is most necessary to figure out characteristics of different parameters as they have direct effect on the power. The possible solution is to detect the probability of rejecting null hypothesis in a uni-variate manner with a given set of parameter values \cite{af}. \\
+
+
+\newpage
+
+\pagestyle{empty}
+
+\medskip
+
+\begin{thebibliography}{18}
+
+\bibitem{aa} 
+Alex Dmitrienko, Walter W. Offen and Peter H. Westfall.
+\textit{Gatekeeping strategies for clinical trials that do not require all primary effects to be significant}. DOI: 10.1002/sim.1526. Statistics in Medicine 2003; 22:2387–2534. 
+
+\bibitem{ab} 
+Alex Dmitrienko and Ajit C. Tamhane.
+\textit{Gatekeeping procedures with clinical trial applications}. DOI: 10.1002/pst.291. Pharmaceutical Statistics 2007; 6(3):151–250.
+
+\bibitem{ac} 
+Alex Dmitrienko, Gautier Paux and Thomas brechenmacher.
+\textit{Power calculations in Clinical trials with complex clinical objectives}. Journal of the Japanese Society of Computational Statistics 2015; 28:15–50.
+
+\bibitem{ad} 
+Walter Offen, Christy Chuang-Stein, Alex Dmitrienko.
+\textit{Multiple Co-primary Endpoints: Medical and statistical Solutions: A Report From the Multiple Endpoints Expert Team of the Pharmaceutical Research and Manufacturers of America}. Drug Information Journal 2007; 41(1):31-46. 
+\\\texttt{https://doi.org/10.1177/009286150704100105}.
+
+\bibitem{ae} 
+Mohammad Huque and Joachim Röhmel.
+\textit{Multiplicity Problems in Clinical Trials: A Regulatory Perspective}. Multiple Testing Problems in Pharmaceutical Statistics; Chapter 1.
+\\\texttt{https://web.njit.edu/~wguo/Math654_2012/DTb_Chapter1.pdf}.
+
+
+\bibitem{af} 
+Alex Dmitrienko, Frank bretz and Peter H. Westfall.
+\textit{Multiple Testing Methodology}. Multiple Testing Problems in Pharmaceutical Statistics;Chapter 2.
+\\\texttt{https://web.njit.edu/~wguo/Math654_2012/DTb_Chapter2.pdf}.
+
+\bibitem{ag} 
+\textit{Concept paper on the need for a guideline on multiplicity issues in clinical trials}. European Medicines Agency: Committee for Human Medicinal Products (CHMP); 24 May 2012. EMA/286914/2012.
+
+\bibitem{ah} 
+\textit{Guideline on multiplicity issues in clinical trials}. European Medicines Agency: Committee for Human Medicinal Products (CHMP); 15 December 2016. EMA/CHMP/44762/2017.
+
+\bibitem{ai} 
+\textit{Multiple Testing Procedures in Clinical Trials}. Alex Dmitrienko. IbS workshop, berlin, Sep 19-20, 2013. 
+
+\bibitem{aj} 
+George Kordzakhia and Alex Dmitrienko.
+\textit{Superchain procedures in clinical trials with multiple objectives}. DOI: 10.1002/sim.5537. Statistics in Medicine 2012; 32(3):361–537.
+
+\bibitem{ak} 
+Alex Dmitrienko and Ajit C. Tamhane.
+\textit{General Theory of Mixture Procedures for Gatekeeping}. DOI: 10.1002/bimj.201100258. biometrical Journal 2013; 55(3): 402-419.
+
+\bibitem{al} 
+Alex Dmitrienko and Ajit C. Tamhane.
+\textit{Mixtures of multiple testing procedures for gatekeeping applications in clinical trials}. PubMed; PMID: 21503948 DOI: 10.1002/sim.4008.
+
+\bibitem{am} 
+Alex Dmitrienko, Ajit C. Tamhane and Lingyun Liu.
+\textit{Mixtures of Multiple Testing Procedures with Gatekeeping Applications}. Department of Industrial Engineering and Management Sciences. Northwestern University, Evanston, Illinois 60208-3119, U.S.A. Working Paper No. 08-04. 
+
+\bibitem{an} 
+Mario Hasler.
+\textit{IUT for multiple endpoints}. Reports of the Institute of biostatistics: No 01 / 2007, Natural Sciences Faculty, Leibniz University of Hannover.
+
+
+\bibitem{ap} 
+Jerry brunner.
+\textit{Union-Intersection Multiple Comparison Tests}. March 18, 2004.
+\\\texttt{http://www.utstat.toronto.edu/~brunner/oldclass/2201s04/handouts/ScheffeTechReport1j.pdf}.
+
+\bibitem{aq} 
+Alex Dmitrienko, brian L. Wiens.
+\textit{Tree-structured gatekeeping tests in clinical trials with hierarchically ordered multiple objectives}. DOI: 10.1002/sim.2716. Statistics in Medicine 2007; 26(12): 2465–2478.
+
+\bibitem{ar}
+Alan Genz, Frank Bretz, Tetsuhisa Miwa, Xuefei Mi, Friedrich Leisch, Fabian Scheipl, Torsten Hothorn.\textit{ mvtnorm: Multivariate Normal and t Distributions. R package version 1.0-6. (2017)} Alan Genz, Frank Bretz (2009), Computation of Multivariate Normal and t Probabilities. Lecture Notes in Statistics, Vol. 195., Springer-Verlag, Heidelberg. ISBN 978-3-642-01688-2.
+\\\texttt{http://CRAN.R-project.org/package=mvtnorm}
+
+\bibitem{as}
+H. Wickham.
+\textit{ggplot2: Elegant Graphics for Data Analysis. Springer-Verlag New York, 2009.} A BibTeX entry for LaTeX users is
+
+  @Book{,
+    author = {Hadley Wickham},
+    title = {ggplot2: Elegant Graphics for Data Analysis},
+    publisher = {Springer-Verlag New York},
+    year = {2009},
+    isbn = {978-0-387-98140-6},
+    url = {http://ggplot2.org},
+  }
+
+
+\end{thebibliography}
+
+\newpage
+\begin{appendices}
+\section{R code of simulation to evaluate effects of \texttt{Correlation(rho)} on power}
+\begin{Schunk}
+\begin{Sinput}
+# Sequence of correlation score
+s <- seq(from = .01, to = 1.0, by = 0.1)
+pvals3 <- lengths(s)
+pvals4 <- lengths(s)
+# define length of power as length of correlation
+# first endpoint by Fixed-sequence
+power3 <- numeric(length(s))
+# second endpoint by Fixed-sequence
+power4 <- numeric(length(s))
+# first endpoint by Fallback
+power.fall3 <- numeric(length(s))
+# second endpoint by Fallback
+power.fall4 <- numeric(length(s))
+# number of simulation
+M <- 100000
+for(i in 1:length(s)){
+  sigma <- lengths(s)
+  S2 <- matrix(c(0.87, s[i]*sqrt(0.87), s[i]*sqrt(0.87), 1), ncol = 2)
+  S4 <- matrix(c(1, s[i]*sqrt(0.95), s[i]*sqrt(0.95), 0.95), ncol = 2)
+  for(j in 1:M){
+    X3 <- rmvnorm(n, mean = mu2, sigma = S2)
+    X4 <- rmvnorm(n, mean = mu4, sigma = S4)
+    
+    pvals3[j] <- t.test(X3[,1], X4[,1])$p.value
+    pvals4[j] <- t.test(X3[,2], X4[,2])$p.value
+  }
+  power3[i] <- sum(pvals3 < alpha)/M
+  first.fixc <- pvals3 < alpha
+  power4[i] <- sum(pvals4[first.fixc] < alpha)/M
+  power.fall3[i] <- sum(pvals3 < alpha*w1)/M
+  first.fallc <- pvals3 < alpha*w1
+  power.fall4[i] <- (sum(pvals4[first.fallc] < alpha) +
+	sum(pvals4[!first.fallc] < w2*alpha))/M
+}
+\end{Sinput}
+\end{Schunk}
+
+\section{R code to exhibition the effects of \texttt{correlation on power} at first endpoint by fixed-sequence procedure}  
+\begin{Schunk}
+\begin{Sinput}
+
+# R code to construct data frame with necessary variables to
+# draw relation between correlation & power.
+CorrData <- data.frame(correlation = s, power.fa3 = power.fall3,
+                       power.fa4 = power.fall4,
+                       power3 = power3, power4 = power4)
+
+# R code to exhibit the figure,
+library(ggplot2)
+ggplot(CorrData, aes(x=correlation, y=power3)) + 
+  geom_point(shape=19, alpha=0.25) +
+  geom_smooth(method = loess) +
+  ggtitle("Relation of correlation & power by Fixed-sequence") +
+  theme(plot.title = element_text(size = 20, face = "bold")) +
+  xlab("correlation(rho)") + ylab("power at first endpoint") +
+  theme(axis.text.x = element_text(colour="grey20",size=15,angle=0,hjust=.5,
+	      vjust=.5,face="plain"),
+        axis.text.y = element_text(colour="grey20",size=15,angle=0,hjust=1,
+				vjust=0,face="plain"),  
+        axis.title.x = element_text(colour="black",size=20,angle=0,hjust=.5,
+				vjust=0,face="plain"),
+        axis.title.y = element_text(colour="black",size=20,angle=90,hjust=.5,
+				vjust=.5,face="plain"))
+
+\end{Sinput}
+\end{Schunk}
+\section{R code to set up the effects of \texttt{correlation on power} at second endpoint by fixed-sequence procedure}
+\begin{Schunk}
+\begin{Sinput}
+ggplot(CorrData, aes(x=correlation, y=power4)) + 
+  geom_point(shape=19, alpha=0.25) +
+  geom_smooth(method = loess) +
+  ggtitle("Relation of correlation & power by Fixed-sequence") +
+  theme(plot.title = element_text(size = 20, face = "bold")) +
+  xlab("correlation(rho)") + ylab("power at second endpoint") +
+  theme(axis.text.x = element_text(colour="grey20",size=15,angle=0,hjust=.5,
+	      vjust=.5,face="plain"),
+        axis.text.y = element_text(colour="grey20",size=15,angle=0,hjust=1,
+				vjust=0,face="plain"),  
+        axis.title.x = element_text(colour="black",size=20,angle=0,hjust=.5,
+				vjust=0,face="plain"),
+        axis.title.y = element_text(colour="black",size=20,angle=90,hjust=.5,
+				vjust=.5,face="plain"))
+
+\end{Sinput}
+\end{Schunk}
+\section{R code to display the effects of \texttt{correlation on power} at first endpoint by fallback procedure}
+\begin{Schunk}
+\begin{Sinput}
+ggplot(CorrData, aes(x=correlation, y=power.fa3)) + 
+  geom_point(shape=19, alpha=0.25) +
+  geom_smooth(method = loess) +
+  ggtitle("Relation between correlation & power by Fallback") +
+  theme(plot.title = element_text(size = 20, face = "bold")) +
+  xlab("correlation(rho)") + ylab("power at first endpoint") +
+  theme(axis.text.x = element_text(colour="grey20",size=15,angle=0,hjust=.5,
+	      vjust=.5,face="plain"),
+        axis.text.y = element_text(colour="grey20",size=15,angle=0,hjust=1,
+				vjust=0,face="plain"),  
+        axis.title.x = element_text(colour="black",size=20,angle=0,hjust=.5,
+				vjust=0,face="plain"),
+        axis.title.y = element_text(colour="black",size=20,angle=90,hjust=.5,
+				vjust=.5,face="plain"))
+
+\end{Sinput}
+\end{Schunk}
+\section{R code to demonstrate the effects of \texttt{correlation on power} at second endpoint by fallback procedure}
+\begin{Schunk}
+\begin{Sinput}
+ggplot(CorrData, aes(x=correlation, y=power.fa4)) + 
+  geom_point(shape=19, alpha=0.25) +
+  geom_smooth(method = loess) +
+  ggtitle("Relation between correlation & power by Fallback") +
+  theme(plot.title = element_text(size = 20, face = "bold")) +
+  xlab("correlation(rho)") + ylab("power at second endpoint") +
+  theme(axis.text.x = element_text(colour="grey20",size=15,angle=0,hjust=.5,
+	      vjust=.5,face="plain"),
+        axis.text.y = element_text(colour="grey20",size=15,angle=0,hjust=1,
+				vjust=0,face="plain"),  
+        axis.title.x = element_text(colour="black",size=20,angle=0,hjust=.5,
+				vjust=0,face="plain"),
+        axis.title.y = element_text(colour="black",size=20,angle=90,hjust=.5,
+				vjust=.5,face="plain"))
+
+\end{Sinput}
+\end{Schunk}
+\section{R code to set up the effects of \texttt{correlation on power} at second endpoint with large Y-axis by fixed-sequence procedure}
+\begin{Schunk}
+\begin{Sinput}
+ggplot(CorrData, aes(x=correlation, y=power4)) + 
+  geom_point(shape=19, alpha=0.25) +
+  geom_smooth(method = loess) +
+  ggtitle("Relation of correlation & power by Fixed-sequence") +
+  theme(plot.title = element_text(size = 20, face = "bold")) +
+  xlab("correlation(rho)") + ylab("power at second endpoint") + ylim(0.5, 1) +
+  theme(axis.text.x = element_text(colour="grey20",size=15,angle=0,hjust=.5,
+	      vjust=.5,face="plain"),
+        axis.text.y = element_text(colour="grey20",size=15,angle=0,hjust=1,
+				vjust=0,face="plain"),  
+        axis.title.x = element_text(colour="black",size=20,angle=0,hjust=.5,
+				vjust=0,face="plain"),
+        axis.title.y = element_text(colour="black",size=20,angle=90,hjust=.5,
+				vjust=.5,face="plain"))
+
+\end{Sinput}
+\end{Schunk}
+\section{R code to demonstrate the effects of \texttt{correlation on power} at second endpoint with large Y-axis by fallback procedure}
+\begin{Schunk}
+\begin{Sinput}
+ggplot(CorrData, aes(x=correlation, y=power.fa4)) + 
+  geom_point(shape=19, alpha=0.25) +
+  geom_smooth(method = loess) +
+  ggtitle("Relation between correlation & power by Fallback") +
+  theme(plot.title = element_text(size = 20, face = "bold")) +
+  xlab("correlation(rho)") + ylab("power at second endpoint") + ylim(0.5, 1) +
+  theme(axis.text.x = element_text(colour="grey20",size=15,angle=0,hjust=.5,
+	      vjust=.5,face="plain"),
+        axis.text.y = element_text(colour="grey20",size=15,angle=0,hjust=1,
+				vjust=0,face="plain"),  
+        axis.title.x = element_text(colour="black",size=20,angle=0,hjust=.5,
+				vjust=0,face="plain"),
+        axis.title.y = element_text(colour="black",size=20,angle=90,hjust=.5,
+				vjust=.5,face="plain"))
+
+\end{Sinput}
+\end{Schunk}
+\section{R code of simulation to assess effects of \texttt{Sample size(n)} on power}
+\begin{Schunk}
+\begin{Sinput}
+#### effects of sample size on power
+# Number of simulation
+M <- 1000
+# Sequence of sample size
+n <- seq(from = 40, to = 150, by = 10)
+power5 <- numeric(length(n))
+power6 <- numeric(length(n))
+power.fall5 <- numeric(length(n))
+power.fall6 <- numeric(length(n))
+# Covariance matrix considering no any correlation,
+S2 <- matrix(c(0.87, 0, 0, 1), ncol = 2)
+S4 <- matrix(c(1, 0, 0, 0.95), ncol = 2)
+for(i in 1:length(n)){
+  pvals5 <- numeric(M)
+  pvals6 <- rep(1, M)
+  for(j in 1:M){
+    X3 <- rmvnorm(n[i], mean = mu2, sigma = S2)
+    X4 <- rmvnorm(n[i], mean = mu4, sigma = S4)
+    
+    pvals5[j] <- t.test(X3[,1], X4[,1])$p.value
+    pvals6[j] <- t.test(X3[,2], X4[,2])$p.value
+  }
+  power5[i] <- sum(pvals5 < alpha)/M
+  first.fixs <- pvals5 < alpha
+  power6[i] <- sum(pvals6[first.fixs] < alpha)/M
+  power.fall5[i] <- sum(pvals5 < alpha*w1)/M
+  first.ep <- pvals5 < alpha*w1
+  power.fall6[i] <- (sum(pvals6[first.ep] < alpha) + 
+	sum(pvals6[!first.ep] < w2*alpha))/M
+}
+\end{Sinput}
+\end{Schunk}
+
+\section{R code to draw the effects of \texttt{sample size} on power at first endpoint by fixed-sequence procedure}  
+\begin{Schunk}
+\begin{Sinput}
+# R code to build data frame with necessary variables to 
+# draw relation between sample size & power.
+sampleData <- data.frame(samplesize = n, power.fa5 = power.fall5,
+                         power.fa6 = power.fall6,
+                         power5 = power5, power6 = power6)
+# R code to illustrate the figure,
+ggplot(sampleData, aes(x=samplesize, y=power5)) + 
+  geom_point(shape=19, alpha=0.25) +
+  geom_smooth(method = loess) +
+  ggtitle("Relation of sample size & power by fixed-sequence") +
+  theme(plot.title = element_text(size = 20, face = "bold")) +
+  xlab("sample size(n)") + ylab("power at first endpoint") +
+  theme(axis.text.x = element_text(colour="grey20",size=15,angle=0,hjust=.5,
+	      vjust=.5,face="plain"),
+        axis.text.y = element_text(colour="grey20",size=15,angle=0,hjust=1,
+				vjust=0,face="plain"),  
+        axis.title.x = element_text(colour="black",size=20,angle=0,hjust=.5,
+				vjust=0,face="plain"),
+        axis.title.y = element_text(colour="black",size=20,angle=90,hjust=.5,
+				vjust=.5,face="plain"))
+
+\end{Sinput}
+\end{Schunk}
+\section{R code to set up the effects of \texttt{sample size} on power at second endpoint by fixed-sequence procedure}
+\begin{Schunk}
+\begin{Sinput}
+ggplot(sampleData, aes(x=samplesize, y=power6)) + 
+  geom_point(shape=19, alpha=0.25) +
+  geom_smooth(method = loess) +
+  ggtitle("Relation of sample size & power by fixed-sequence") +
+  theme(plot.title = element_text(size = 20, face = "bold")) +
+  xlab("sample size(n)") + ylab("power at second endpoint") +
+  theme(axis.text.x = element_text(colour="grey20",size=15,angle=0,hjust=.5,
+	      vjust=.5,face="plain"),
+        axis.text.y = element_text(colour="grey20",size=15,angle=0,hjust=1,
+				vjust=0,face="plain"),  
+        axis.title.x = element_text(colour="black",size=20,angle=0,hjust=.5,
+				vjust=0,face="plain"),
+        axis.title.y = element_text(colour="black",size=20,angle=90,hjust=.5,
+				vjust=.5,face="plain"))
+
+\end{Sinput}
+\end{Schunk}
+\section{R code to illustrate the effects of \texttt{sample size} on power at first endpoint by fallback procedure}
+\begin{Schunk}
+\begin{Sinput}
+ggplot(sampleData, aes(x=samplesize, y=power.fa5)) + 
+  geom_point(shape=19, alpha=0.25) +
+  geom_smooth(method = loess) +
+  ggtitle("Relation between sample size & power by fallback") +
+  theme(plot.title = element_text(size = 20, face = "bold")) +
+  xlab("sample size(n)") + ylab("power at first endpoint") +
+  theme(axis.text.x = element_text(colour="grey20",size=15,angle=0,hjust=.5,
+	      vjust=.5,face="plain"),
+        axis.text.y = element_text(colour="grey20",size=15,angle=0,hjust=1,
+				vjust=0,face="plain"),  
+        axis.title.x = element_text(colour="black",size=20,angle=0,hjust=.5,
+				vjust=0,face="plain"),
+        axis.title.y = element_text(colour="black",size=20,angle=90,hjust=.5,
+				vjust=.5,face="plain"))
+
+\end{Sinput}
+\end{Schunk}
+\section{R code to demonstrate the effects of \texttt{sample size} on power at second endpoint by fallback procedure}
+\begin{Schunk}
+\begin{Sinput}
+ggplot(sampleData, aes(x=samplesize, y=power.fa6)) + 
+  geom_point(shape=19, alpha=0.25) +
+  geom_smooth(method = loess) +
+  ggtitle("Relation between sample size & power by fallback") +
+  theme(plot.title = element_text(size = 20, face = "bold")) +
+  xlab("sample size(n)") + ylab("power at second endpoint") +
+  theme(axis.text.x = element_text(colour="grey20",size=15,angle=0,hjust=.5,
+	      vjust=.5,face="plain"),
+        axis.text.y = element_text(colour="grey20",size=15,angle=0,hjust=1,
+				vjust=0,face="plain"),  
+        axis.title.x = element_text(colour="black",size=20,angle=0,hjust=.5,
+				vjust=0,face="plain"),
+        axis.title.y = element_text(colour="black",size=20,angle=90,hjust=.5,
+				vjust=.5,face="plain"))
+
+\end{Sinput}
+\end{Schunk}
+\section{R code of simulation to evaluate the effects of \texttt{first Standardized effect size(mu1)} on power}
+\begin{Schunk}
+\begin{Sinput}
+# Standardized effect size
+mu2 <- cbind(seq(from = .25, to = 1, by = .05), 0.78)
+# Number of sample size
+n <- 80
+power7 <- numeric(nrow(mu2))
+power8 <- numeric(nrow(mu2))
+power.fall7 <- numeric(nrow(mu2))
+power.fall8 <- numeric(nrow(mu2))
+for(i in 1:nrow(mu2)){
+  pvals7 <- numeric(M)
+  pvals8 <- rep(1, M)
+  for(j in 1:M){
+    X3 <- rmvnorm(n, mean = mu2[i,], sigma = S2)
+    X4 <- rmvnorm(n, mean = mu4, sigma = S4)
+    
+    pvals7[j] <- t.test(X3[,1], X4[,1])$p.value
+    pvals8[j] <- t.test(X3[,2], X4[,2])$p.value
+  }
+  power7[i] <- sum(pvals7 < alpha)/M
+  first.fixe <- pvals7 < alpha
+  power8[i] <- sum(pvals8[first.fixe] < alpha)/M
+  power.fall7[i] <- sum(pvals7 < alpha*w1)/M
+  first.epe <- pvals7 < alpha*w1
+  power.fall8[i] <- (sum(pvals8[first.epe] < alpha) + 
+	sum(pvals8[!first.epe] < w2*alpha))/M
+}
+\end{Sinput}
+\end{Schunk}
+
+
+\section{R code to illustrate the effects of \texttt{first Standardized effect size on power} at first endpoint by fixed-sequence procedure}  
+\begin{Schunk}
+\begin{Sinput}
+# R code to construct data frame with necessary variables to draw 
+# relation between first Standardized effect size & power.
+standrData <- data.frame(standardized = mu2[1:16],
+                         power.fa7 = power.fall7, power.fa8 = power.fall8,
+                         power7 = power7, power8 = power8)
+# R code to construct the figure.
+ggplot(standrData, aes(x=standardized, y=power7)) + 
+  geom_point(shape=19, alpha=0.25) +
+  geom_smooth(method = loess) +
+  ggtitle("Relation between mu1 & power by fixed-sequence") +
+  theme(plot.title = element_text(size = 20, face = "bold")) +
+  xlab("First standardized effect size(mu1)") + 
+  ylab("power at first endpoint") +
+  theme(axis.text.x = element_text(colour="grey20",size=15,angle=0,hjust=.5,
+	      vjust=.5,face="plain"),
+        axis.text.y = element_text(colour="grey20",size=15,angle=0,hjust=1,
+				vjust=0,face="plain"),  
+        axis.title.x = element_text(colour="black",size=20,angle=0,hjust=.5,
+				vjust=0,face="plain"),
+        axis.title.y = element_text(colour="black",size=20,angle=90,hjust=.5,
+				vjust=.5,face="plain"))
+
+\end{Sinput}
+\end{Schunk}
+\section{R code to show the effects of \texttt{first Standardized effect size on power} at second endpoint by fixed-sequence procedure}
+\begin{Schunk}
+\begin{Sinput}
+ggplot(standrData, aes(x=standardized, y=power8)) + 
+  geom_point(shape=19, alpha=0.25) +
+  geom_smooth(method = loess) +
+  ggtitle("Relation between mu1 & power by fixed-sequence") +
+  theme(plot.title = element_text(size = 20, face = "bold")) +
+  xlab("First standardized effect size(mu1)") + 
+  ylab("power at second endpoint") +
+  theme(axis.text.x = element_text(colour="grey20",size=15,angle=0,hjust=.5,
+	      vjust=.5,face="plain"),
+        axis.text.y = element_text(colour="grey20",size=15,angle=0,hjust=1,
+				vjust=0,face="plain"),  
+        axis.title.x = element_text(colour="black",size=20,angle=0,hjust=.5,
+				vjust=0,face="plain"),
+        axis.title.y = element_text(colour="black",size=20,angle=90,hjust=.5,
+				vjust=.5,face="plain"))
+
+\end{Sinput}
+\end{Schunk}
+\section{R code to display the effects of \texttt{first Standardized effect size on power} at first endpoint by fallback procedure}
+\begin{Schunk}
+\begin{Sinput}
+ggplot(standrData, aes(x=standardized, y=power.fa7)) + 
+  geom_point(shape=19, alpha=0.25) +
+  geom_smooth(method = loess) +
+  ggtitle("Relation between mu1 & power by fallback") +
+  theme(plot.title = element_text(size = 20, face = "bold")) +
+  xlab("First standardized effect size(mu1)") + ylab("power at first endpoint") +
+  theme(axis.text.x = element_text(colour="grey20",size=15,angle=0,hjust=.5,
+	      vjust=.5,face="plain"),
+        axis.text.y = element_text(colour="grey20",size=15,angle=0,hjust=1,
+				vjust=0,face="plain"),  
+        axis.title.x = element_text(colour="black",size=20,angle=0,hjust=.5,
+				vjust=0,face="plain"),
+        axis.title.y = element_text(colour="black",size=20,angle=90,hjust=.5,
+				vjust=.5,face="plain"))
+
+\end{Sinput}
+\end{Schunk}
+\section{R code to demonstrate the effects of \texttt{first Standardized effect size on power} at second endpoint by fallback procedure}
+\begin{Schunk}
+\begin{Sinput}
+ggplot(standrData, aes(x=standardized, y=power.fa8)) + 
+  geom_point(shape=19, alpha=0.25) +
+  geom_smooth(method = loess) +
+  ggtitle("Relation between mu1 & power by fallback") +
+  theme(plot.title = element_text(size = 20, face = "bold")) +
+  xlab("First standardized effect size(mu1)") + ylab("power at second endpoint") +
+  theme(axis.text.x = element_text(colour="grey20",size=15,angle=0,hjust=.5,
+	      vjust=.5,face="plain"),
+        axis.text.y = element_text(colour="grey20",size=15,angle=0,hjust=1,
+				vjust=0,face="plain"),  
+        axis.title.x = element_text(colour="black",size=20,angle=0,hjust=.5,
+				vjust=0,face="plain"),
+        axis.title.y = element_text(colour="black",size=20,angle=90,hjust=.5,
+				vjust=.5,face="plain"))
+
+\end{Sinput}
+\end{Schunk}
+\section{R code to set up the effects of \texttt{first Standardized effect size on power} at second endpoint with large Y-axis by fixed-sequence procedure}
+\begin{Schunk}
+\begin{Sinput}
+ggplot(standrData, aes(x=standardized, y=power8)) + 
+  geom_point(shape=19, alpha=0.25) +
+  geom_smooth(method = loess) +
+  ggtitle("Relation between mu1 & power by fixed-sequence") +
+  theme(plot.title = element_text(size = 20, face = "bold")) +
+  xlab("First standardized effect size(mu1)") + 
+  ylab("power at second endpoint") + ylim(0, 1) +
+  theme(axis.text.x = element_text(colour="grey20",size=15,angle=0,hjust=.5,
+	      vjust=.5,face="plain"),
+        axis.text.y = element_text(colour="grey20",size=15,angle=0,hjust=1,
+				vjust=0,face="plain"),  
+        axis.title.x = element_text(colour="black",size=20,angle=0,hjust=.5,
+				vjust=0,face="plain"),
+        axis.title.y = element_text(colour="black",size=20,angle=90,hjust=.5,
+				vjust=.5,face="plain"))
+
+\end{Sinput}
+\end{Schunk}
+\section{R code to demonstrate the effects of \texttt{first Standardized effect size on power} at second endpoint with large Y-axis by fallback procedure}
+\begin{Schunk}
+\begin{Sinput}
+ggplot(standrData, aes(x=standardized, y=power.fa8)) + 
+  geom_point(shape=19, alpha=0.25) +
+  geom_smooth(method = loess) +
+  ggtitle("Relation between mu1 & power by fallback") +
+  theme(plot.title = element_text(size = 20, face = "bold")) +
+  xlab("First standardized effect size(mu1)") + 
+  ylab("power at second endpoint") + ylim(0, 1)
+  theme(axis.text.x = element_text(colour="grey20",size=15,angle=0,hjust=.5,
+	      vjust=.5,face="plain"),
+        axis.text.y = element_text(colour="grey20",size=15,angle=0,hjust=1,
+				vjust=0,face="plain"),  
+        axis.title.x = element_text(colour="black",size=20,angle=0,hjust=.5,
+				vjust=0,face="plain"),
+        axis.title.y = element_text(colour="black",size=20,angle=90,hjust=.5,
+				vjust=.5,face="plain"))
+
+\end{Sinput}
+\end{Schunk}
+\section{R code of simulation to evaluate the effects of \texttt{second Standardized effect size(mu2)} on power}
+\begin{Schunk}
+\begin{Sinput}
+# Standardized effect size  
+mu2 <- cbind(0.68, seq(from = .25, to = 1, by = .05))
+power9 <- numeric(nrow(mu2))
+power10 <- numeric(nrow(mu2))
+power.fall9 <- numeric(nrow(mu2))
+power.fall10 <- numeric(nrow(mu2))
+for(i in 1:nrow(mu2)){
+  pvals9 <- numeric(M)
+  pvals10 <- rep(1, M)
+  for(j in 1:M){
+    X3 <- rmvnorm(n, mean = mu2[i,], sigma = S2)
+    X4 <- rmvnorm(n, mean = mu4, sigma = S4)
+    
+    pvals9[j] <- t.test(X3[,1], X4[,1])$p.value
+    pvals10[j] <- t.test(X3[,2], X4[,2])$p.value
+  }
+  power9[i] <- sum(pvals9 < alpha)/M
+  first.fixes <- pvals9 < alpha
+  power10[i] <- sum(pvals10[first.fixes] < alpha)/M
+  power.fall9[i] <- sum(pvals9 < alpha*w1)/M
+  first.epe2 <- pvals9 < alpha*w1
+  power.fall10[i] <- (sum(pvals10[first.epe2] < alpha) + 
+	sum(pvals10[!first.epe2] < w2*alpha))/M
+}
+\end{Sinput}
+\end{Schunk}
+
+\section{R code to display the effects of \texttt{second Standardized effect size on power} at first endpoint by fixed-sequence procedure}  
+\begin{Schunk}
+\begin{Sinput}
+# R code to construct data frame with necessary variables to draw
+# relation between second Standardized effect size & power.
+standrData2 <- data.frame(standardized2 = mu2[,2],
+                          power.fa9 = power.fall9, power.fa10 = power.fall10,
+                          power9 = power9, power10 = power10)
+# R code to draw the plot;
+ggplot(standrData2, aes(x=standardized2, y=power9)) + 
+  geom_point(shape=19, alpha=0.25) +
+  geom_smooth(method = loess) +
+  ggtitle("Relation between mu2 & power by fixed-sequence") +
+  theme(plot.title = element_text(size = 20, face = "bold")) +
+  xlab("standardized effect size(mu2)") + ylab("power at first endpoint") +
+  theme(axis.text.x = element_text(colour="grey20",size=15,angle=0,hjust=.5,
+	      vjust=.5,face="plain"),
+        axis.text.y = element_text(colour="grey20",size=15,angle=0,hjust=1,
+				vjust=0,face="plain"),  
+        axis.title.x = element_text(colour="black",size=20,angle=0,hjust=.5,
+				vjust=0,face="plain"),
+        axis.title.y = element_text(colour="black",size=20,angle=90,hjust=.5,
+				vjust=.5,face="plain"))
+
+\end{Sinput}
+\end{Schunk}
+\section{R code to shown the effects of \texttt{second Standardized effect size on power} at second endpoint by fixed-sequence procedure}
+\begin{Schunk}
+\begin{Sinput}
+ggplot(standrData2, aes(x=standardized2, y=power10)) + 
+  geom_point(shape=19, alpha=0.25) +
+  geom_smooth(method = loess) +
+  ggtitle("Relation between mu2 & power by fixed-sequence") +
+  theme(plot.title = element_text(size = 20, face = "bold")) +
+  xlab("standardized effect size(mu2)") + ylab("power at second endpoint") +
+  theme(axis.text.x = element_text(colour="grey20",size=15,angle=0,hjust=.5,
+	      vjust=.5,face="plain"),
+        axis.text.y = element_text(colour="grey20",size=15,angle=0,hjust=1,
+				vjust=0,face="plain"),  
+        axis.title.x = element_text(colour="black",size=20,angle=0,hjust=.5,
+				vjust=0,face="plain"),
+        axis.title.y = element_text(colour="black",size=20,angle=90,hjust=.5,
+				vjust=.5,face="plain"))
+
+\end{Sinput}
+\end{Schunk}
+
+\section{R code to display the effects of second Standardized effect size on power at first endpoint by fallback procedure}
+\begin{Schunk}
+\begin{Sinput}
+# In case of Fallback procedure
+# At first endpoint
+ggplot(standrData2, aes(x=standardized2, y=power.fa9)) + 
+  geom_point(shape=19, alpha=0.25) +
+  geom_smooth(method = loess) +
+  ggtitle("Relation between mu2 & power by fallback") +
+  theme(plot.title = element_text(size = 20, face = "bold")) +
+  xlab("standardized effect size(mu2)") + ylab("power at first endpoint") +
+  theme(axis.text.x = element_text(colour="grey20",size=15,angle=0,hjust=.5,
+	      vjust=.5,face="plain"),
+        axis.text.y = element_text(colour="grey20",size=15,angle=0,hjust=1,
+				vjust=0,face="plain"),  
+        axis.title.x = element_text(colour="black",size=20,angle=0,hjust=.5,
+				vjust=0,face="plain"),
+        axis.title.y = element_text(colour="black",size=20,angle=90,hjust=.5,
+				vjust=.5,face="plain"))
+
+\end{Sinput}
+\end{Schunk}
+
+\section{R code to demonstrate the effects of second Standardized effect size on power at second endpoint by fallback procedure}
+\begin{Schunk}
+\begin{Sinput}
+# At second endpoint
+ggplot(standrData2, aes(x=standardized2, y=power.fa10)) + 
+  geom_point(shape=19, alpha=0.25) +
+  geom_smooth(method = loess) +
+  ggtitle("Relation between mu2 & power by fallback") +
+  theme(plot.title = element_text(size = 20, face = "bold")) +
+  xlab("standardized effect size(mu2)") + ylab("power at second endpoint") +
+  theme(axis.text.x = element_text(colour="grey20",size=15,angle=0,hjust=.5,
+	      vjust=.5,face="plain"),
+        axis.text.y = element_text(colour="grey20",size=15,angle=0,hjust=1,
+				vjust=0,face="plain"),  
+        axis.title.x = element_text(colour="black",size=20,angle=0,hjust=.5,
+				vjust=0,face="plain"),
+        axis.title.y = element_text(colour="black",size=20,angle=90,hjust=.5,
+				vjust=.5,face="plain"))
+\end{Sinput}
+\end{Schunk}
+
+\end{appendices}
+
+\end{document}
